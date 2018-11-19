@@ -1,8 +1,9 @@
 import pygame
 import time
 
-BGColor = (255, 255, 255)
-fontColor = (0, 0, 0)
+calendarList = (    [''])
+BGColor = (0, 0, 0)
+fontColor = (255, 255, 255)
 width = 1920
 height = 1080
 
