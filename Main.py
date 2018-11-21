@@ -20,25 +20,23 @@ def initScreen() :
     runScreen()
 
 def nowCalender():
-    global curTime
     i = 0
     while True:
         calendarHour = getHour(readCalendar(i))
         calendarMin = getMin(readCalendar(i))
-        calMins = calendarHour*60+calendarMin
-        curMins = (curTime.tm_hour+9)*60+curTime.tm_min # UTC+9
+        calSecs = (calendarHour*60+calendarMin)*60
+        curSecs = ((curTime.tm_hour+9)*60+curTime.tm_min)*60+curTime.tm_sec     # UTC+9
 
-        if calMins <= curMins:
+        if calSecs <= curSecs:
             calendarHour = getHour(readCalendar(i+1))
             calendarMin = getMin(readCalendar(i+1))
-            calMins = calendarHour*60+calendarMin
+            calSecs = (calendarHour * 60 + calendarMin) * 60
 
-            if curMins < calMins:
-                return i+2      # Now Calendar index
+            if curSecs < calSecs:
+                return i+1      # Now Calendar index
         i += 1
 
 def readCalendar(index):
-    global calendar
     with open('data\\CalendarList.txt', 'rt', encoding='UTF8') as file:
         for i in range(index+1):
             calendar = file.readline()
@@ -46,79 +44,90 @@ def readCalendar(index):
                 calendar = calendar.replace('\ufeff', '')
                 return calendar
 
+def getTime(cal):
+    cal = cal.split()
+    return cal.pop()
+
 def getHour(cal):
-    splitedCal = cal.split()
-    calTime = splitedCal[1].split(':')
-    hour = calTime[0]
+    calTime = getTime(cal)
+    splitedCal = calTime.split(':')
+    hour = splitedCal[0]
     return int(hour)
 
 def getMin(cal):
-    splitedCal = cal.split()
-    calTime = splitedCal[1].split(':')
-    min = calTime[1]
+    calTime = getTime(cal)
+    splitedCal = calTime.split(':')
+    min = splitedCal[1]
     return int(min)
 
 def getName(cal):
     splitedCal = cal.split()
-    calName = splitedCal[0]
-    return calName
+    return splitedCal[0]
 
-def subTime(calTime):
-    curTime = time.gmtime(time.time())
-    calTime = calTime.split(':')
-    calHour = calTime[0]
-    calMin = calTime[1]
-    curHour = curTime.tm_hour+9 # UTC+9
+def subTime(calTime, curTime):
+    calHour = getHour(calTime)
+    calMin = getMin(calTime)
+    curHour = getHour(curTime)
+    curMin = getMin(curTime)
+
+    curHour += 9 # UTC+9
     if curHour > 24:
         curHour -= 24
-    curMin = curTime.tm_min
-    calResult = int(calHour)*60+int(calMin)
+    calResult = calHour*60+calMin
     curResult = curHour*60+curMin
     resultMin = calResult - curResult
     resultTime = str(resultMin//60) + ':' + str(resultMin%60)   # Hour : Min
     return resultTime
 
+
 def fontInit(text, font):
     textSurface = font.render(text, True, fontColor)
     return textSurface, textSurface.get_rect()
 
-def updateTime():
-    global curTime, screen, curCalendar
+def initName():
+    global screen, nameFont
 
-    timeFont = pygame.font.Font('data\\test_sans.ttf', 200)
     nameFont = pygame.font.Font('data\\NanumPen.ttf', 200)
 
-    with open('data\\CalendarList.txt', 'rt', encoding='UTF8') as file:
-        for i in range(nowCalender()):
-            curCalendar = file.readline()
-    curCalendar = curCalendar.split()
+def initTime():
+    global screen, timeFont
 
-    curCalName = curCalendar[0]
-    curCalTime = curCalendar[1]
-    remainderTime = subTime(curCalTime) + ':' + str(60-int(time.time()%60+1))   # subTime(hh:mm):(0~59)
+    timeFont = pygame.font.Font('data\\test_sans.ttf', 200)
+
+def updateData():
+    global screen, nameFont, timeFont
+
+    curTime = time.gmtime(time.time())
+    calTime = getTime(readCalendar(nowCalender()))
+    remainderTime = subTime(calTime, str(curTime.tm_hour) + ':' + str(curTime.tm_min)) + ':' + \
+                    str(60 - int(curTime.tm_sec % 60 + 1))  # subTime(hh:mm):(0~59)
+
+    curCalName = getName(readCalendar(nowCalender()))
+
+    screen.fill(BGColor)
+    nameTextSurf, nameTextRect = fontInit(curCalName, nameFont)
+    nameTextRect.center = ((width / 2), (height - 800))
+    screen.blit(nameTextSurf, nameTextRect)
 
     timeTextSurf, timeTextRect = fontInit(remainderTime, timeFont)
-    timeTextRect.center = ((width/2), (height/2))
+    timeTextRect.center = ((width / 2), (height / 2))
     screen.blit(timeTextSurf, timeTextRect)
-
-    nameTextSurf, nameTextRect = fontInit(curCalName, nameFont)
-    nameTextRect.center = ((width/2), (height-800))
-    screen.blit(nameTextSurf, nameTextRect)
 
 def runScreen():
     global curTime, screen, clock
 
+    initName()
+    initTime()
     crashed = False
     while not crashed:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 crashed = True
 
-        curTime = time.gmtime(time.time())
-        screen.fill(BGColor)
-        updateTime()
+        updateData()
         pygame.display.update()
-        clock.tick(30)
+        clock.tick(1)
+        print("tick")
 
     pygame.quit()
 
