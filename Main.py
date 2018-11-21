@@ -22,17 +22,11 @@ def initScreen() :
 def nowCalender():
     i = 0
     while True:
-        calendarHour = getHour(readCalendar(i))
-        calendarMin = getMin(readCalendar(i))
-        calSecs = (calendarHour*60+calendarMin)*60
-        curSecs = ((curTime.tm_hour+9)*60+curTime.tm_min)*60+curTime.tm_sec     # UTC+9
-
-        if calSecs <= curSecs:
-            calendarHour = getHour(readCalendar(i+1))
-            calendarMin = getMin(readCalendar(i+1))
-            calSecs = (calendarHour * 60 + calendarMin) * 60
-
-            if curSecs < calSecs:
+        calSec = getSec(readCalendar(i))
+        curSec = (homeTime(curTime.tm_hour)*60+curTime.tm_min)*60+curTime.tm_sec     # UTC+9
+        if calSec <= curSec:
+            calSec = getSec(readCalendar(i+1))
+            if curSec < calSec:
                 return i+1      # Now Calendar index
         i += 1
 
@@ -44,39 +38,36 @@ def readCalendar(index):
                 calendar = calendar.replace('\ufeff', '')
                 return calendar
 
-def getTime(cal):
-    cal = cal.split()
-    return cal.pop()
-
-def getHour(cal):
-    calTime = getTime(cal)
-    splitedCal = calTime.split(':')
-    hour = splitedCal[0]
-    return int(hour)
-
-def getMin(cal):
-    calTime = getTime(cal)
-    splitedCal = calTime.split(':')
-    min = splitedCal[1]
-    return int(min)
+def getSec(cal):
+    splitedCal = cal.split()        # string to list
+    calTime = splitedCal.pop()      # get last element
+    splitedCalTime = calTime.split(':')     # split hour:min
+    calHour = int(splitedCalTime[0])
+    calMin = int(splitedCalTime[1])
+    calSec = calHour*3600 + calMin*60
+    return calSec
 
 def getName(cal):
     splitedCal = cal.split()
     return splitedCal[0]
 
-def subTime(calTime, curTime):
-    calHour = getHour(calTime)
-    calMin = getMin(calTime)
-    curHour = getHour(curTime)
-    curMin = getMin(curTime)
+def homeTime(hour):
+    hour += 9
+    if hour > 24:
+        hour -= 24
+    return hour
 
-    curHour += 9 # UTC+9
-    if curHour > 24:
-        curHour -= 24
-    calResult = calHour*60+calMin
-    curResult = curHour*60+curMin
-    resultMin = calResult - curResult
-    resultTime = str(resultMin//60) + ':' + str(resultMin%60)   # Hour : Min
+def subTime(calTime):
+    calSec = getSec(calTime)
+    curSec = (homeTime(curTime.tm_hour) * 60 + curTime.tm_min) * 60 + curTime.tm_sec
+
+    resultSec = calSec - curSec
+    resultHour = resultSec // 3600
+    resultSec = resultSec - (resultHour*3600)
+    resultMin = resultSec // 60
+    resultSec = resultSec - (resultMin*60)
+
+    resultTime = str(resultHour) + ':' + str(resultMin) + ':' + str(resultSec)   # Hour:Min:Sec
     return resultTime
 
 
@@ -97,10 +88,8 @@ def initTime():
 def updateData():
     global screen, nameFont, timeFont
 
-    curTime = time.gmtime(time.time())
-    calTime = getTime(readCalendar(nowCalender()))
-    remainderTime = subTime(calTime, str(curTime.tm_hour) + ':' + str(curTime.tm_min)) + ':' + \
-                    str(60 - int(curTime.tm_sec % 60 + 1))  # subTime(hh:mm):(0~59)
+    calSec = readCalendar(nowCalender())
+    remainderTime = subTime(calSec)        # subTime(hh:mm):(0~59)
 
     curCalName = getName(readCalendar(nowCalender()))
 
@@ -124,10 +113,10 @@ def runScreen():
             if event.type == pygame.QUIT:
                 crashed = True
 
+        curTime = time.gmtime(time.time())
         updateData()
         pygame.display.update()
         clock.tick(1)
-        print("tick")
 
     pygame.quit()
 
