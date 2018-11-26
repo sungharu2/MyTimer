@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import Parsing  # parse diet
+import re
 import pygame
 import time
+import urllib.request
+import urllib.parse
+from urllib.request import Request, urlopen
+from bs4 import BeautifulSoup as BS
 
 curTime = time.gmtime(time.time())
 BGColor = (0, 0, 0)
@@ -76,17 +82,56 @@ def fontInit(text, font):
     return textSurface, textSurface.get_rect()
 
 def initName():
-    global screen, nameFont
+    global nameFont
 
     nameFont = pygame.font.Font('data\\NanumPen.ttf', 200)
 
 def initTime():
-    global screen, timeFont
+    global timeFont
 
     timeFont = pygame.font.Font('data\\test_sans.ttf', 200)
 
+def initDiet():
+    global dietFont
+
+    dietFont = pygame.font.Font('data\\NanumPen.ttf', 50)
+
+    diet = get_diet()
+    return diet
+
+def initMeal():
+    global mealFont, meal
+
+    mealFont = pygame.font.Font('data\\NanumPen.ttf', 80)
+
+    if get_meal() == 1:
+        meal = "아침"
+    elif get_meal() == 2:
+        meal = "점심"
+    elif get_meal() == 3:
+        meal = "저녁"
+    return meal
+
+def get_meal():
+    global count
+
+    meal = nowCalender()
+    if meal > 24 or meal <= 4:  # 아침:1 점심:2 저녁:3
+        count = 1
+    elif 4 < meal <= 13:
+        count = 2
+    else:
+        count = 3
+    return count
+
+def get_diet():
+    meal = get_meal()
+    diet = Parsing.dietExtract(meal)
+    return diet
+
+
 def updateData():
-    global screen, nameFont, timeFont
+    global screen, nameFont, timeFont, dietFont, dietName, mealFont, meal
 
     calSec = readCalendar(nowCalender())
     remainderTime = subTime(calSec)        # subTime(hh:mm):(0~59)
@@ -102,11 +147,31 @@ def updateData():
     timeTextRect.center = ((width / 2), (height / 2))
     screen.blit(timeTextSurf, timeTextRect)
 
+    if get_meal() != count:
+        dietName = initDiet()
+
+    dietHeight = 100
+    if get_meal() != meal:
+        mealTextSurf, mealTextRect = fontInit(meal, mealFont)
+        mealTextRect.center = ((width - 200), dietHeight)
+        screen.blit(mealTextSurf, mealTextRect)
+
+    dietHeight = 200
+    dietList = dietName.split('\n')
+    for d in dietList:
+        dietHeight += 100
+        dietTextSurf, dietTextRect = fontInit(d, dietFont)
+        dietTextRect.center = ((width - 200), dietHeight)
+        screen.blit(dietTextSurf, dietTextRect)
+
 def runScreen():
-    global curTime, screen, clock
+    global curTime, screen, clock, dietName, meal
 
     initName()
     initTime()
+    dietName = initDiet()
+    meal = initMeal()
+
     crashed = False
     while not crashed:
         for event in pygame.event.get():
