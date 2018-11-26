@@ -84,17 +84,17 @@ def fontInit(text, font):
 def initName():
     global nameFont
 
-    nameFont = pygame.font.Font('data\\NanumPen.ttf', 200)
+    nameFont = pygame.font.Font('data\\mainFont.ttf', 200)
 
 def initTime():
     global timeFont
 
-    timeFont = pygame.font.Font('data\\test_sans.ttf', 200)
+    timeFont = pygame.font.Font('data\\timerFont.ttf', 200)
 
 def initDiet():
     global dietFont
 
-    dietFont = pygame.font.Font('data\\NanumPen.ttf', 50)
+    dietFont = pygame.font.Font('data\\mainFont.ttf', 60)
 
     diet = get_diet()
     return diet
@@ -102,7 +102,7 @@ def initDiet():
 def initMeal():
     global mealFont, meal
 
-    mealFont = pygame.font.Font('data\\NanumPen.ttf', 80)
+    mealFont = pygame.font.Font('data\\mainFont.ttf', 130)
 
     if get_meal() == 1:
         meal = "아침"
@@ -153,7 +153,7 @@ def updateData():
     dietHeight = 100
     if get_meal() != meal:
         mealTextSurf, mealTextRect = fontInit(meal, mealFont)
-        mealTextRect.center = ((width - 200), dietHeight)
+        mealTextRect.center = ((width - 300), dietHeight)
         screen.blit(mealTextSurf, mealTextRect)
 
     dietHeight = 200
@@ -161,7 +161,7 @@ def updateData():
     for d in dietList:
         dietHeight += 100
         dietTextSurf, dietTextRect = fontInit(d, dietFont)
-        dietTextRect.center = ((width - 200), dietHeight)
+        dietTextRect.center = ((width - 300), dietHeight)
         screen.blit(dietTextSurf, dietTextRect)
 
 def runScreen():
