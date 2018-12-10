@@ -13,7 +13,9 @@ def get_html(url):
 def get_diet(ymd, weekday, code):
     schYmd = ymd
     schMmealSccode = code
-    num = weekday + 1      # 일:0 월:1, ... , 토:6
+    num = weekday + 1     # 일:0 월:1, ... , 토:6
+    if num >= 7:
+        num = 0
     schCode = open("data\\URL.txt", 'r').readline().replace('\n', '')
     URL = (
             "https://stu.dge.go.kr/sts_sci_md01_001.do?"
@@ -39,9 +41,15 @@ def get_diet(ymd, weekday, code):
     return element
 
 
-def dietExtract(meal):
+def dietExtract(meal, isTomorrow):
     nowTime = datetime.datetime.now()
-    todayDate = str(nowTime.date()).replace('-', '.')
 
+    if isTomorrow:
+        tomorrow = datetime.timedelta(days=1)
+        tomorrowDate = nowTime + tomorrow
+        tomorrowDateList = str(tomorrowDate).split()
+        todayDate = tomorrowDateList[0].replace('-', '.')
+    else:
+        todayDate = str(nowTime.date()).replace('-', '.')
     diet = get_diet(todayDate, nowTime.weekday(), meal)
     return diet
